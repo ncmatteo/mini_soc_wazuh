@@ -1,0 +1,82 @@
+##serveur
+
+Téléchargement de l'assistant d'installation Wazuh et les fichier de configuration
+
+curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
+curl -sO https://packages.wazuh.com/4.14/config.yml
+
+ensuite changer la config avec les bonnes adresses ip (Wazuh server, Wazuh indexer, and Wazuh dashboard nodes)
+
+echo '
+nodes:
+  # Wazuh indexer nodes
+  indexer:
+    - name: nom du serveur
+      ip: "ip du serveur"
+
+  server:
+    - name: nom du serveur
+      ip: "ip du serveur"
+
+  # Wazuh dashboard nodes
+  dashboard:
+    - name: nom du serveur 
+      ip: "ip du serveur"
+'> config.yml 
+
+
+
+Génération des fichiers nécessaires à l’installation du cluster Wazuh (certificats, clés, mots de passe et configuration) à partir du fichier config.yml
+
+bash wazuh-install.sh --generate-config-files
+
+bash wazuh-install.sh --wazuh-indexer wazserv
+
+bash wazuh-install.sh --start-cluster
+
+récupérer les informations d'identification 
+
+tar -axf wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt -O | grep -P "\'admin\'" -A 1
+
+
+
+Installation du serveur 
+
+bash wazuh-install.sh --wazuh-server wazserv
+
+Dashboard
+
+bash wazuh-install.sh --wazuh-dashboard wazserv
+
+##AGENT 
+
+#WINDOWS 
+
+Installer l'agent depuis la doc et l'executer en mettant l'ip du server
+
+#UBUNTU
+
+
+apt-get install gnupg apt-transport-https
+
+curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+
+apt-get update
+
+WAZUH_MANAGER="<ip du server>" apt-get install wazuh-agent
+
+
+
+systemctl daemon-reload
+systemctl enable wazuh-agent
+systemctl start wazuh-agent
+
+
+
+
+
+
+
+
